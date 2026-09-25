@@ -17,8 +17,7 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "types": ["vitest/globals", "@testing-library/jest-dom"],
-    "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] }
+    "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src", "vite.config.ts"]
 }
