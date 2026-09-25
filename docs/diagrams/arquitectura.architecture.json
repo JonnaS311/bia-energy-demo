@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI Energy Management Platform — Arquitectura del MVP",
+    "output": "arquitectura.html",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "camino-analista", "label": "Camino del analista", "focus": ["analyst", "frontend", "api", "db"], "note": "Login, dashboard, medidores y anomalías: Caddy sirve la SPA, que consume la API con JWT; la API lee PostgreSQL." },
+      { "id": "ingesta-arranque", "label": "Ingesta al arranque", "focus": ["csv", "ingest", "db"], "note": "Al arrancar, el backend migra el esquema y carga readings.csv y events.csv de forma idempotente: 12 medidores, 4.032 lecturas, 4 eventos." },
+      { "id": "pipeline-ia", "label": "Pipeline de IA", "focus": ["api", "engine", "explainer", "deepseek", "db"], "note": "POST /ai/analyze lanza el pipeline de 7 etapas; el motor decide tipo, severidad y confianza; DeepSeek solo redacta." }
+    ]
+  },
+  "layout": { "mode": "grid", "origin": [40, 60], "cols": 5, "cellW": 150, "cellH": 64, "gapX": 100, "gapY": 80 },
+  "components": [
+    { "id": "analyst", "type": "external", "label": "Analista de operaciones", "sublabel": "Chrome / Edge", "row": 0, "col": 0, "size": [150, 64] },
+    { "id": "frontend", "type": "frontend", "label": "Frontend React", "sublabel": "React 18 · Caddy :5173", "row": 0, "col": 2, "size": [150, 64], "tag": "UI en español" },
+    { "id": "csv", "type": "external", "label": "data/ (CSV)", "sublabel": "readings · events", "row": 1, "col": 0, "size": [150, 64] },
+    { "id": "ingest", "type": "backend", "label": "Ingesta", "sublabel": "idempotente · baseline", "row": 1, "col": 1, "size": [150, 64] },
+    { "id": "api", "type": "backend", "label": "API HTTP Go", "sublabel": "Go 1.22 · chi · :8080", "row": 1, "col": 2, "size": [150, 64], "tag": "JWT HS256 · bcrypt" },
+    { "id": "engine", "type": "backend", "label": "Motor de anomalías", "sublabel": "7 etapas · goroutine", "row": 1, "col": 3, "size": [150, 64], "tag": "reglas + estadística" },
+    { "id": "explainer", "type": "backend", "label": "Explicador", "sublabel": "LLM · fallback plantilla", "row": 1, "col": 4, "size": [150, 64] },
+    { "id": "db", "type": "database", "label": "PostgreSQL 16", "sublabel": "pgx + migrate · :5432", "row": 2, "col": 2, "size": [150, 64], "tag": "volumen pgdata" },
+    { "id": "deepseek", "type": "external", "label": "DeepSeek API", "sublabel": "deepseek-flash · go-openai", "row": 3, "col": 4, "size": [150, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "docker compose up --build", "wraps": ["frontend", "ingest", "api", "engine", "explainer", "db"], "pad": 40 },
+    { "kind": "security-group", "label": "Servicio backend (un proceso Go)", "wraps": ["ingest", "api", "engine", "explainer"], "pad": 14 }
+  ],
+  "connections": [
+    { "id": "analyst-frontend", "from": "analyst", "to": "frontend", "label": "HTTPS :5173", "variant": "emphasis" },
+    { "id": "frontend-api", "from": "frontend", "to": "api", "label": "REST JSON · Bearer JWT · polling 1 s", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelAt": [615, 164] },
+    { "id": "csv-ingest", "from": "csv", "to": "ingest", "label": "lee al arrancar" },
+    { "id": "ingest-db", "from": "ingest", "to": "db", "label": "upsert idempotente" },
+    { "id": "api-db", "from": "api", "to": "db", "label": "SQL vía pgx", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelAt": [615, 308] },
+    { "id": "api-engine", "from": "api", "to": "engine", "label": "POST /ai/analyze" },
+    { "id": "engine-db", "from": "engine", "to": "db", "label": "lee lecturas · escribe anomalías" },
+    { "id": "engine-explainer", "from": "engine", "to": "explainer", "label": "evidencia + tipo" },
+    { "id": "explainer-deepseek", "from": "explainer", "to": "deepseek", "label": "chat/completions · JSON mode · 20 s", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelAt": [1115, 380] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Flujo de demo", "items": ["Login → Dashboard → Medidores → Detalle → Análisis IA → Anomalías → Acción", "10 endpoints: los 8 del PDF, login y PATCH de estado", "Progreso del análisis por polling cada 1 s, sin WebSockets ni SSE"] },
+    { "dot": "emerald", "title": "Datos y motor", "items": ["Ingesta idempotente: 12 medidores, 4.032 lecturas, 4 eventos", "Baseline = primeros 7 días; spikes, persistencia, z-score y ratio físico", "Oráculo de los 12 medidores como test de aceptación único (make test)"] },
+    { "dot": "violet", "title": "IA con fallback", "items": ["El motor decide tipo, severidad y confianza; DeepSeek solo redacta", "Sin DEEPSEEK_API_KEY, timeout o JSON inválido → plantilla determinística", "Payload ≤ 4 KB por anomalía; en tests, un fake HTTP reemplaza a DeepSeek"] }
+  ]
+}

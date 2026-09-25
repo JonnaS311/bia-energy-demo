@@ -1,0 +1,29 @@
+# Ground truth reservado al evaluador: nunca entra al repositorio (maestro §5, spec data RF-D-10)
+data/expected_results.csv
+expected_results.csv
+
+# Dependencias y builds
+node_modules/
+frontend/dist/
+frontend/coverage/
+backend/bin/
+
+# Entorno y secretos (DEEPSEEK_API_KEY, JWT_SECRET, etc. solo como variables de entorno)
+.env
+.env.*
+!.env.example
+*.log
+
+# Reportes locales de cobertura y tests
+*.cov
+coverage.out
+
+# Evidencia de verificación visual del diagrama (contiene rutas locales de la máquina)
+docs/diagrams/evidence/
+
+# Artefactos de revisión de diseño (capturas)
+.impeccable
+.claude
+
+# Otros
+scripts/

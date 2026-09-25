@@ -1,0 +1,22 @@
+{
+	auto_https off
+	admin off
+}
+
+:5173 {
+	root * /srv
+	encode gzip zstd
+
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# Fallback SPA: cualquier ruta sin archivo devuelve index.html (spec frontend RF-F-01)
+	try_files {path} /index.html
+	file_server
+}
