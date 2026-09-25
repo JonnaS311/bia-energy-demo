@@ -1,0 +1,21 @@
+# Imagen para despliegue en la nube (Render). Contexto de build = raíz del repositorio.
+# Diferencia con backend/Dockerfile (docker compose): los CSV van DENTRO de la imagen porque
+# el proveedor no monta volúmenes. Solo se copian readings.csv y events.csv, nunca otro archivo
+# de data/ (spec data RF-D-10).
+FROM golang:1.22-alpine AS build
+WORKDIR /src
+ENV GOTOOLCHAIN=local CGO_ENABLED=0
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+COPY backend/ .
+RUN go build -ldflags="-s -w" -o /out/api ./cmd/api
+
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates && adduser -D -H -u 10001 app
+COPY --from=build /out/api /usr/local/bin/api
+COPY data/readings.csv data/events.csv /app/data/
+USER app
+# Render inyecta PORT (10000 por defecto); el backend lo lee de la variable.
+ENV PORT=8080 DATA_DIR=/app/data
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/api"]

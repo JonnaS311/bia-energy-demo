@@ -33,7 +33,7 @@ func TestLoadDefaults(t *testing.T) {
 func TestLoadOverrides(t *testing.T) {
 	t.Setenv("JWT_SECRET", "s")
 	t.Setenv("DEMO_USER_PASSWORD", "p")
-	t.Setenv("CORS_ALLOWED_ORIGINS", "http://a.test, http://b.test")
+	t.Setenv("CORS_ALLOWED_ORIGINS", "http://a.test, http://b.test/")
 	t.Setenv("LLM_TIMEOUT_SECONDS", "5")
 	t.Setenv("BASELINE_DAYS", "1")
 	c, err := Load()
@@ -42,5 +42,21 @@ func TestLoadOverrides(t *testing.T) {
 	}
 	if len(c.CORSOrigins) != 2 || c.CORSOrigins[1] != "http://b.test" || c.LLMTimeout != 5*time.Second || !c.BaselineInvalid || c.BaselineDays != 7 {
 		t.Fatalf("%+v", c)
+	}
+}
+
+func TestSanitizeDatabaseURL(t *testing.T) {
+	cases := map[string]string{
+		// Formato de Neon: channel_binding se elimina, sslmode se conserva.
+		"postgresql://u:p@ep-x.us-east-2.aws.neon.tech/energy?sslmode=require&channel_binding=require": "postgresql://u:p@ep-x.us-east-2.aws.neon.tech/energy?sslmode=require",
+		// Sin channel_binding la cadena queda intacta.
+		"postgres://energy:energy@db:5432/energy?sslmode=disable": "postgres://energy:energy@db:5432/energy?sslmode=disable",
+		// DSN key=value: no se toca.
+		"host=db user=energy sslmode=disable": "host=db user=energy sslmode=disable",
+	}
+	for in, want := range cases {
+		if got := sanitizeDatabaseURL(in); got != want {
+			t.Errorf("sanitizeDatabaseURL(%q) = %q, want %q", in, got, want)
+		}
 	}
 }

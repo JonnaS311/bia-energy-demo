@@ -1,0 +1,29 @@
+# Blueprint de Render: backend Go en el plan gratuito.
+# Los valores con sync: false se piden en el dashboard al crear el Blueprint y NUNCA se escriben aquí.
+services:
+  - type: web
+    name: energy-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerContext: .
+    dockerfilePath: ./backend/Dockerfile.deploy
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL          # cadena de conexión DIRECTA de Neon (sin -pooler), con sslmode=require
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DEMO_USER_EMAIL
+        value: analista@energy.local
+      - key: DEMO_USER_PASSWORD
+        sync: false
+      - key: DEEPSEEK_API_KEY      # opcional: sin ella se usan las plantillas
+        sync: false
+      - key: DEEPSEEK_MODEL
+        value: deepseek-flash
+      - key: CORS_ALLOWED_ORIGINS  # URL exacta del frontend, ej. https://energy-web.vercel.app
+        sync: false
+      - key: LOG_LEVEL
+        value: info

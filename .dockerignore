@@ -1,0 +1,12 @@
+# Aplica solo a builds con contexto en la raíz (backend/Dockerfile.deploy).
+# docker compose usa ./backend y ./frontend como contexto y no lee este archivo.
+.git
+.claude
+.impeccable
+**/node_modules
+frontend
+docs
+scripts
+**/.env
+**/.env.*
+**/*.log

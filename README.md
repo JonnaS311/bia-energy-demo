@@ -22,6 +22,8 @@ Para explicaciones generadas por LLM, exporta `DEEPSEEK_API_KEY` antes de `docke
 
 Para empezar de cero (borra la base): `docker compose down -v`.
 
+Despliegue gratuito en la nube: Neon para la base, Render para la API y Vercel para el frontend. La guía está en [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Qué hace la IA
 
 Un motor determinístico en `backend/internal/engine` compara cada día contra el baseline de los primeros 7 días y aplica cinco detectores: spike, cambio persistente, outlier horario, corroboración eléctrica y calidad de datos (incluido el ratio físico kWh/(V·I·PF)). Cruza con `events.csv` y clasifica con precedencia fija. El LLM solo redacta el texto a partir de la evidencia; nunca decide tipo, severidad ni confianza.
